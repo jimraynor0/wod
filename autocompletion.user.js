@@ -5,11 +5,10 @@
 // ==UserScript==
 // @name          Wod auto completion
 // @namespace     org.toj
-// @version       0.2
+// @version       0.3
 // @description   Add auto completion text field for item type and skill bonus selector
 // @include       http*://*.world-of-dungeons.*/wod/spiel/hero/items.php*
 // @include       http*://*.world-of-dungeons.*/wod/spiel/trade/trade.php*
-// @require       https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
 // @require       https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js
 // @resource      select2-css https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css
 // @grant         GM_addStyle
@@ -21,10 +20,30 @@ GM_addStyle('.select2-dropdown {color: #FFFFFF !important; background-color: #66
 GM_addStyle('.select2-container--default .select2-selection--single {color: #FFFFFF !important; background-color: #665B47 !important; border-color: #816E36 !important;}');
 GM_addStyle('.select2-container--default .select2-selection--single .select2-selection__rendered {color: #FFFFFF !important; background-color: #665B47 !important; border-color: #816E36 !important;}');
 
-(function ($, undefined) {
-  $(function () {
-    $("select").select2({
-        minimumResultsForSearch: 7
-    });
+var minOptionCount = 12;
+var ignoreFields = [/^EquipItem\[\d+\]$/i, /^sndgrp\d*\[\d+\]$/i];
+
+if(typeof unsafeWindow.jQuery !== "undefined") {
+  var $ = jQuery = unsafeWindow.jQuery;
+
+  $("select").each(function() {
+    $this = $(this);
+    if (minOptionCount > 0 && $this.find("option").length > minOptionCount && doNotIgnore($this.prop("name"))) {
+      $this.select2();
+    }
   });
-})(window.jQuery.noConflict(true));
+
+  function doNotIgnore(field) {
+    if (ignoreFields.length <= 0) {
+      return true;
+    }
+
+    var flag = true;
+    $.each(ignoreFields, function(index, pattern) {
+      if (field.search(pattern) != -1) {
+        flag = false;
+      }
+    });
+    return flag;
+  }
+}
