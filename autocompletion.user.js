@@ -17,8 +17,8 @@
 // ==/UserScript==
 
 GM_addStyle(GM_getResourceText("select2-css"));
-GM_addStyle('.select2-results {max-height: 70vh; !important}');
-GM_addStyle('.select2-container--default .select2-results>.select2-results__options {max-height: 70vh; !important}');
+GM_addStyle('.select2-results__option {padding: 2px}');
+GM_addStyle('.select2-container--default .select2-results>.select2-results__options {max-height: 60vh}');
 
 var minOptionCount = 12;
 var ignoreFields = [/^EquipItem\[\d+\]$/i, /^sndgrp\d*\[\d+\]$/i];
@@ -26,46 +26,36 @@ var ignoreFields = [/^EquipItem\[\d+\]$/i, /^sndgrp\d*\[\d+\]$/i];
 if(typeof unsafeWindow.jQuery !== "undefined") {
   var $ = unsafeWindow.jQuery;
 
-  var height;
-  var backgroundColor;
-  var fontColor;
-  var borderColor;
-  var fontSize;
+  var height, backgroundColor, fontColor, border, fontSize, borderRadius;
 
   $("select").each(function() {
     $this = $(this);
     if (minOptionCount > 0 && $this.find("option").length > minOptionCount && doNotIgnore($this.prop("name"))) {
+      if (height == null) {
+        height = $this.css("height");
+        backgroundColor = $this.css("background-color");
+        fontColor = $this.css("color");
+        border = $this.css("border");
+        fontSize = $this.css("font-size");
+        borderRadius = $this.css("border-radius");
+      }
       $this.select2();
-      height = $this.css("height");
-      backgroundColor = $this.css("background-color");
-      fontColor = $this.css("color");
-      borderColor = $this.css("border-color");
-      fontSize = $this.css("font-size");
     }
   });
 
-  $(".select2-selection--single, .select2-selection__rendered").css("height", height);
-  $(".select2-selection--single, .select2-selection__rendered").css("font-size", fontSize);
-
-  $(".select2-container--default .select2-selection--single .select2-selection__arrow").css("height", height);
-  $(".select2-container--default .select2-selection--single .select2-selection__arrow").css("top", height / 2);
-
-  $(".select2-dropdown").css("background-color", backgroundColor);
-  $(".select2-dropdown").css("color", fontColor);
-  $(".select2-dropdown").css("border-color", borderColor);
-  $(".select2-dropdown").css("font-size", fontSize);
-
-  $(".select2-container--default .select2-selection--single").css("background-color", backgroundColor);
-  $(".select2-container--default .select2-selection--single").css("color", fontColor);
-  $(".select2-container--default .select2-selection--single").css("border-color", borderColor);
-  $(".select2-container--default .select2-selection--single").css("line-height", 1);
-  $(".select2-container--default .select2-selection--single").css("font-size", fontSize);
-
-  $(".select2-container--default .select2-selection--single .select2-selection__rendered").css("background-color", backgroundColor);
-  $(".select2-container--default .select2-selection--single .select2-selection__rendered").css("color", fontColor);
-  $(".select2-container--default .select2-selection--single .select2-selection__rendered").css("border-color", borderColor);
-  $(".select2-container--default .select2-selection--single .select2-selection__rendered").css("line-height", 1);
-  $(".select2-container--default .select2-selection--single .select2-selection__rendered").css("font-size", fontSize);
+  GM_addStyle(".select2-container .select2-selection--single, .select2-container--default .select2-selection--single, .select2-container--default .select2-selection--single .select2-selection__rendered {" +
+    "height: " + height + ";" +
+    "font-size: " + fontSize + ";" +
+    "color: " + fontColor + ";" +
+    "border: " + border + ";" +
+    "border-radius: " + borderRadius + ";" +
+    "line-height: 1;" +
+    "background-color: " + backgroundColor + ";" +
+    "}");
+  GM_addStyle(".select2-container--default .select2-selection--single .select2-selection__arrow {height: " + height + "; top: " + height / 2 + ";}");
+  GM_addStyle(".select2-container--default .select2-selection--single {background-color: " + backgroundColor + "; font-size: " + fontSize + "; color: " + fontColor + "; border: " + border + ";}");
+  GM_addStyle(".select2-dropdown {background-color: " + backgroundColor + "; font-size: " + fontSize + "; color: " + fontColor + "; border: " + border + ";}");
+  GM_addStyle(".select2-selection {background-color: " + backgroundColor + "; font-size: " + fontSize + ";}");
 
   function doNotIgnore(field) {
     if (ignoreFields.length <= 0) {
