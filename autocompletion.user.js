@@ -38,8 +38,7 @@ if(typeof unsafeWindow.jQuery !== "undefined") {
         backgroundColor = $this.css("background-color");
         fontColor = $this.css("color");
         border = $this.css("border");
-        // fontSize = $this.css("font-size");
-        fontSize = "10pt";
+        fontSize = (parseFloat($this.css("font-size")) * 72.0 / 96.0).toFixed() + "pt";
         borderRadius = $this.css("border-radius");
       }
       $this.select2();
