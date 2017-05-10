@@ -6,11 +6,11 @@
 // @name          Wod auto completion
 // @author        Jim Zhai
 // @namespace     org.toj
-// @version       0.5
+// @version       0.5.1
 // @description   Add auto completion text field for item type and skill bonus selector
+// @updateURL		  https://github.com/jimraynor0/wod/raw/master/autocompletion.user.js
+// @downloadURL		https://github.com/jimraynor0/wod/raw/master/autocompletion.user.js
 // @include       http*://*.world-of-dungeons.*/wod/*
-// include       http*://*.world-of-dungeons.*/wod/spiel/hero/items.php*
-// include       http*://*.world-of-dungeons.*/wod/spiel/trade/trade.php*
 // @require       https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js
 // @resource      select2-css https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css
 // @grant         GM_addStyle
@@ -32,6 +32,11 @@ if(typeof unsafeWindow.jQuery !== "undefined") {
   $("select").each(function() {
     $this = $(this);
     if (minOptionCount > 0 && $this.find("option").length > minOptionCount && doNotIgnore($this.prop("name"))) {
+      $this.find("option").each(function() {
+        if (!this.text) {
+          this.text = "　";
+        }
+      });
       if (height == null) {
         height = $this.css("height");
         outerHeight = $this.outerHeight() + "px";
@@ -41,7 +46,7 @@ if(typeof unsafeWindow.jQuery !== "undefined") {
         fontSize = (parseFloat($this.css("font-size")) * 72.0 / 96.0).toFixed() + "pt";
         borderRadius = $this.css("border-radius");
       }
-      $this.select2();
+      $this.select2({'width':'resolve'});
     }
   });
 
