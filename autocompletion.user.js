@@ -6,11 +6,12 @@
 // @name          Wod auto completion
 // @author        Jim Zhai
 // @namespace     org.toj
-// @version       0.5.1
+// @version       0.5.2
 // @description   Add auto completion text field for item type and skill bonus selector
 // @updateURL		  https://github.com/jimraynor0/wod/raw/master/autocompletion.user.js
 // @downloadURL		https://github.com/jimraynor0/wod/raw/master/autocompletion.user.js
 // @include       http*://*.world-of-dungeons.*/wod/*
+// @exclude       http*://*.world-of-dungeons.*/wod/spiel/hero/skillconfig.php
 // @require       https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js
 // @resource      select2-css https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css
 // @grant         GM_addStyle
