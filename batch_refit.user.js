@@ -3,17 +3,17 @@
 // Copyright (c) Jim Zhai
 //-----------------------------------------------------------------------------
 // ==UserScript==
-// @name          Batch refit
+// @name          Wod batch refit
 // @author        Jim Zhai
 // @namespace     org.toj
 // @version       0.1
-// @description   Add auto completion text field for item type and skill bonus selector
+// @description   Allow player to change actions in batch in config page
 // @updateURL		  https://github.com/jimraynor0/wod/raw/master/batchrefit.user.js
 // @downloadURL		https://github.com/jimraynor0/wod/raw/master/batchrefit.user.js
 // @include       http*://*.world-of-dungeons.*/wod/spiel/hero/skillconf*
 // ==/UserScript==
 
-WodAction.prototype.signiture = function() {
+WodAction.prototype.signature = function() {
   var signitureComponents = [];
   signitureComponents.push(this.skill == null ? "" : this.skill.id);
   signitureComponents.push(this.item == null ? "" : this.item.id);
@@ -64,19 +64,20 @@ RefitConfig.prototype.aggregateActions = function (type) {
 
   function aggregate(actions, level) {
     actions.forEach(function (action) {
-      action.originalSignature = action.signature();
-      if (!isset(actionRefs, action.originalSignature)) {
+      var originalSignature = action.signature();
+      if (!isset(actionRefs, originalSignature)) {
         var copy = new WodAction();
         copy.copyFrom(action);
+        copy.originalSignature = originalSignature;
         aggregated.push(copy);
-        actionRefs[action.originalSignature] = {
+        actionRefs[originalSignature] = {
           levels: [level],
           refs: [action]
         };
       } else {
-        actionRefs[action.originalSignature].refs.push(action);
-        if (!is_in_array(level, actionRefs[action.originalSignature].levels)) {
-          actionRefs[action.originalSignature].levels.push(level);
+        actionRefs[originalSignature].refs.push(action);
+        if (!is_in_array(level, actionRefs[originalSignature].levels)) {
+          actionRefs[originalSignature].levels.push(level);
         }
       }
     });
@@ -84,31 +85,38 @@ RefitConfig.prototype.aggregateActions = function (type) {
 };
 
 RefitConfig.prototype.applyInitiatives = function () {
-    WOD_CFG.dungeon.standard.initiative.copyFrom(cfg.initiative);
-    WOD_CFG.dungeon.levels.forEach(function() {
-      this.initiative.copyFrom(cfg.initiative);
-    });
+  var init = this.initiative;
+  WOD_CFG.dungeon.standard.initiative.copyFrom(init);
+  WOD_CFG.dungeon.levels.forEach(function(level) {
+    if (level.overwriteStandard) {
+      level.initiative.copyFrom(init);
+    }
+  });
 };
 
 RefitConfig.prototype.applyHeals = function () {
-    WOD_CFG.dungeon.standard.heal.copyFrom(cfg.heal);
-    WOD_CFG.dungeon.levels.forEach(function() {
-      this.heal.copyFrom(cfg.heal);
-    });
+  var heal = this.heal;
+  WOD_CFG.dungeon.standard.heal.copyFrom(heal);
+  WOD_CFG.dungeon.levels.forEach(function(level) {
+    if (level.overwriteStandard) {
+      level.heal.copyFrom(heal);
+    }
+  });
 };
 
 RefitConfig.prototype.applyActions = function () {
-  this.cfg.preround.forEach(function(action) {
-    this.cfg.aggregatedPreround.actionRefs[action.originalSignature].refs.forEach(function(actionRef) {
+  var _this = this;
+  this.preround.forEach(function(action) {
+    _this.aggregatedPreround.actionRefs[action.originalSignature].refs.forEach(function(actionRef) {
       actionRef.copyFrom(action);
-    })
-  })
+    });
+  });
 
-  this.cfg.round.forEach(function(action) {
-    this.cfg.aggregatedRound.actionRefs[action.originalSignature].refs.forEach(function(actionRef) {
+  this.round.forEach(function(action) {
+    _this.aggregatedRound.actionRefs[action.originalSignature].refs.forEach(function(actionRef) {
       actionRef.copyFrom(action);
-    })
-  })
+    });
+  });
 };
 
 // the refit tab will look very much like a level tab
@@ -140,7 +148,7 @@ function WodUiRefit() {
     if (READONLY==false){
         but = new WodUiButton("应用");
         but.setClickListener(function() {
-            this.applyChanges();
+            _this.applyChanges();
         });
         this.wrapper.appendChild(new WodUiWidget('p', but));
     }
@@ -153,7 +161,7 @@ function WodUiRefit() {
     if (READONLY==false){;
         but = new WodUiButton("应用");
         but.setClickListener(function() {
-            applyChanges();
+            _this.applyChanges();
         });
         this.wrapper.appendChild(new WodUiWidget('p', but));
     }
@@ -182,7 +190,7 @@ function WodUiRefit() {
     if (READONLY==false){
         but = new WodUiButton("应用");
         but.setClickListener(function() {
-            applyChanges();
+            _this.applyChanges();
         });
         this.wrapper.appendChild(new WodUiWidget('p', but));
     }
@@ -207,44 +215,45 @@ WodUiRefit.prototype.refresh = function() {
             this.healBadDropdowns[i].refresh();
         }
     }
-}
+};
 
 WodUiRefit.prototype.applyChanges = function() {
   this.cfg.applyInitiatives();
   this.cfg.applyHeals();
   this.cfg.applyActions();
+  THE_ORDERS.dungeon.setSelectedLevel(SELECTED_LVL);
 };
 
 // overwrite WodUiOrders.setSelectedTab so that it includes refit tab
 WodUiOrders.prototype.setSelectedTab = function(tab, child) {
 
-    this.tabGeneral.setClass(null)
-    this.tabDungeon.setClass(null)
-    this.tabNotes.setClass(null)
-    this.tabRefit.setClass(null)
+    this.tabGeneral.setClass(null);
+    this.tabDungeon.setClass(null);
+    this.tabNotes.setClass(null);
+    this.tabRefit.setClass(null);
 
     if (PLAINCONFIG==false){
-        this.tabDuel.setClass(null)
+        this.tabDuel.setClass(null);
     }
 
-    tab.setClass('selected')
+    tab.setClass('selected');
 
-    this.general.setStyleProperty('display', 'none')
-    this.dungeon.setStyleProperty('display', 'none')
-    this.notes.setStyleProperty('display', 'none')
-    this.refit.setStyleProperty('display', 'none')
+    this.general.setStyleProperty('display', 'none');
+    this.dungeon.setStyleProperty('display', 'none');
+    this.notes.setStyleProperty('display', 'none');
+    this.refit.setStyleProperty('display', 'none');
 
     if (PLAINCONFIG==false){
-        this.duel.setStyleProperty('display', 'none')
+        this.duel.setStyleProperty('display', 'none');
     }
 
     if (child.level != undefined)
-        child.level.setPasteAnyButtonVisible()
+        child.level.setPasteAnyButtonVisible();
 
-    child.setStyleProperty('display', 'block')
+    child.setStyleProperty('display', 'block');
 
-    SELECTED_TAB=tab.getId()
-}
+    SELECTED_TAB=tab.getId();
+};
 
 function refreshRefit() {
   var AGGREGATED_CFG = new RefitConfig();
