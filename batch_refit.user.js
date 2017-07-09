@@ -6,12 +6,17 @@
 // @name          Wod batch refit
 // @author        Jim Zhai
 // @namespace     org.toj
-// @version       0.1
+// @version       0.1.1
 // @description   Allow player to change actions in batch in config page
 // @updateURL		  https://github.com/jimraynor0/wod/raw/master/batch_refit.user.js
 // @downloadURL		https://github.com/jimraynor0/wod/raw/master/batch_refit.user.js
 // @include       http*://*.world-of-dungeons.*/wod/spiel/hero/skillconf*
 // ==/UserScript==
+
+// TODO:
+// display action appearance levels
+// delete action?
+// batch replace item/ammo with another of the same type
 
 WodAction.prototype.signature = function() {
   var signitureComponents = [];
@@ -92,6 +97,7 @@ RefitConfig.prototype.applyInitiatives = function () {
       level.initiative.copyFrom(init);
     }
   });
+  THE_ORDERS.dungeon.setSelectedLevel(SELECTED_LVL);
 };
 
 RefitConfig.prototype.applyHeals = function () {
@@ -102,6 +108,7 @@ RefitConfig.prototype.applyHeals = function () {
       level.heal.copyFrom(heal);
     }
   });
+  THE_ORDERS.dungeon.setSelectedLevel(SELECTED_LVL);
 };
 
 RefitConfig.prototype.applyActions = function () {
@@ -117,6 +124,7 @@ RefitConfig.prototype.applyActions = function () {
       actionRef.copyFrom(action);
     });
   });
+  THE_ORDERS.dungeon.setSelectedLevel(SELECTED_LVL);
 };
 
 // the refit tab will look very much like a level tab
@@ -138,6 +146,20 @@ function WodUiRefit() {
     } else {
         this.initiativeDropdown = new WodUiSkillItemDropdown(THE_ENV.initiativeSkills);
         this.wrapper.appendChild(this.initiativeDropdown);
+        var buttons = new WodUiWidget("p");
+        but = new WodUiButton("应用先攻技能改动");
+        but.setClickListener(function() {
+            if (_this.cfg) {
+              _this.cfg.applyInitiatives();
+            }
+        });
+        buttons.appendChild(but);
+        but = new WodUiButton("应用所有改动");
+        but.setClickListener(function() {
+          _this.applyChanges();
+        });
+        buttons.appendChild(but);
+        this.wrapper.appendChild(buttons);
     }
 
     this.wrapper.appendChild(new WodUiHeading(3, WOD_STR.Level.preround));
@@ -146,9 +168,11 @@ function WodUiRefit() {
     this.wrapper.appendChild(this.preroundActionList);
 
     if (READONLY==false){
-        but = new WodUiButton("应用");
+        but = new WodUiButton("应用动作改动");
         but.setClickListener(function() {
-            _this.applyChanges();
+            if (_this.cfg) {
+              _this.cfg.applyActions();
+            }
         });
         this.wrapper.appendChild(new WodUiWidget('p', but));
     }
@@ -159,9 +183,11 @@ function WodUiRefit() {
     this.wrapper.appendChild(this.roundActionList);
 
     if (READONLY==false){;
-        but = new WodUiButton("应用");
+        but = new WodUiButton("应用动作改动");
         but.setClickListener(function() {
-            _this.applyChanges();
+          if (_this.cfg) {
+            _this.cfg.applyActions();
+          }
         });
         this.wrapper.appendChild(new WodUiWidget('p', but));
     }
@@ -188,11 +214,20 @@ function WodUiRefit() {
     this.healBadDropdowns    = this.createHealingDropwdowns( WOD_STR.Level.heal.bad );
 
     if (READONLY==false){
-        but = new WodUiButton("应用");
-        but.setClickListener(function() {
-            _this.applyChanges();
-        });
-        this.wrapper.appendChild(new WodUiWidget('p', but));
+      var buttons = new WodUiWidget("p");
+      but = new WodUiButton("应用治疗技能改动");
+      but.setClickListener(function() {
+        if (_this.cfg) {
+          _this.cfg.applyHeals();
+        }
+      });
+      buttons.appendChild(but);
+      but = new WodUiButton("应用所有改动");
+      but.setClickListener(function() {
+        _this.applyChanges();
+      });
+      buttons.appendChild(but);
+      this.wrapper.appendChild(buttons);
     }
 }
 
@@ -221,7 +256,6 @@ WodUiRefit.prototype.applyChanges = function() {
   this.cfg.applyInitiatives();
   this.cfg.applyHeals();
   this.cfg.applyActions();
-  THE_ORDERS.dungeon.setSelectedLevel(SELECTED_LVL);
 };
 
 // overwrite WodUiOrders.setSelectedTab so that it includes refit tab
@@ -274,3 +308,10 @@ THE_ORDERS.tabRefit.setClickListener(function() {
 THE_ORDERS.tabs.appendChild(THE_ORDERS.tabRefit);
 
 refreshRefit();
+
+if (SELECTED_TAB != THE_ORDERS.tabRefit.getId()) {
+  THE_ORDERS.tabRefit.setClass(null);
+  THE_ORDERS.refit.setStyleProperty('display', 'none');
+} else {
+  THE_ORDERS.setSelectedTab(SELECTED_TAB, THE_ORDERS.refit);
+}
